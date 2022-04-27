@@ -20,7 +20,8 @@ class Recipe(recipe.Recipe):
                      'tests': 'disabled'}
 
     # https://github.com/harfbuzz/harfbuzz/pull/2458
-    patches = ['harfbuzz/0001-meson-Export-symbols-for-a-DLL-when-not-building-sta.patch']
+    # Workaround from https://github.com/harfbuzz/harfbuzz/issues/2555 
+    patches = ['harfbuzz/0001-meson-Export-symbols-for-a-DLL-when-not-building-sta.patch', 'harfbuzz/0002-Disable-unused-variable-warnings-in-certain-files-fo.patch']
 
     files_bins = ['hb-ot-shape-closure', 'hb-view', 'hb-shape']
     files_libs = ['libharfbuzz']

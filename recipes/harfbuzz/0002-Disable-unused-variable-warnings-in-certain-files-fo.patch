@@ -1,0 +1,51 @@
+From 95e7c09ab1ce788e0418fa368cf4da0d4fdf3724 Mon Sep 17 00:00:00 2001
+From: Kiyoshi Shikuma <kiyoshi@brilliant.tech>
+Date: Wed, 27 Apr 2022 15:26:16 -0700
+Subject: [PATCH] Disable unused variable warnings in certain files for clang
+ compilation
+
+---
+ src/hb-gobject-enums.cc.tmpl | 1 +
+ src/hb-gobject-structs.cc    | 1 +
+ src/hb-subset-cff1.cc        | 1 +
+ 3 files changed, 3 insertions(+)
+
+diff --git a/src/hb-gobject-enums.cc.tmpl b/src/hb-gobject-enums.cc.tmpl
+index 2ffd1c9d7..26954ed28 100644
+--- a/src/hb-gobject-enums.cc.tmpl
++++ b/src/hb-gobject-enums.cc.tmpl
+@@ -30,6 +30,7 @@
+ #ifdef HAVE_GOBJECT
+ 
+ /* g++ didn't like older gtype.h gcc-only code path. */
++#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+ #include <glib.h>
+ #if !GLIB_CHECK_VERSION(2,29,16)
+ #undef __GNUC__
+diff --git a/src/hb-gobject-structs.cc b/src/hb-gobject-structs.cc
+index 7c46e2640..a64913a9a 100644
+--- a/src/hb-gobject-structs.cc
++++ b/src/hb-gobject-structs.cc
+@@ -50,6 +50,7 @@
+ 
+ 
+ /* g++ didn't like older gtype.h gcc-only code path. */
++#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+ #include <glib.h>
+ #if !GLIB_CHECK_VERSION(2,29,16)
+ #undef __GNUC__
+diff --git a/src/hb-subset-cff1.cc b/src/hb-subset-cff1.cc
+index f3ed518f7..83ef00555 100644
+--- a/src/hb-subset-cff1.cc
++++ b/src/hb-subset-cff1.cc
+@@ -28,6 +28,7 @@
+ 
+ #ifndef HB_NO_SUBSET_CFF
+ 
++#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+ #include "hb-open-type.hh"
+ #include "hb-ot-cff1-table.hh"
+ #include "hb-set.h"
+-- 
+2.32.0 (Apple Git-132)
+
