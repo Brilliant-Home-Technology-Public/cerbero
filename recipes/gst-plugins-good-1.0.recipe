@@ -35,6 +35,8 @@ class Recipe(custom.GStreamer):
             'libvpx', 'libdv', 'cairo']
     use_system_libs = True
 
+    patches = ['gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch', 'gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch']
+
 
     files_lang = ['gst-plugins-good-1.0']
 
