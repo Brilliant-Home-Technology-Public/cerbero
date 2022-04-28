@@ -648,8 +648,8 @@ class CMake (MakefilesBase):
     async def configure(self):
         cc = self.env.get('CC', 'gcc')
         cxx = self.env.get('CXX', 'g++')
-        cflags = self.env.get('CFLAGS', '')
-        cxxflags = self.env.get('CXXFLAGS', '')
+        cflags = self.env.get('CFLAGS', '') + '-Wno-unused-but-set-variable'
+        cxxflags = self.env.get('CXXFLAGS', '') + '-Wno-unused-but-set-variable'
         # FIXME: CMake doesn't support passing "ccache $CC"
         if self.config.use_ccache:
             cc = cc.replace('ccache', '').strip()
