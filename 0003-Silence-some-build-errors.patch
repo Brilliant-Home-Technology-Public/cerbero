@@ -1,0 +1,41 @@
+From 0ad2fb238aa08636069afc3529920a2841867a04 Mon Sep 17 00:00:00 2001
+From: Kiyoshi Shikuma <kiyoshi@brilliant.tech>
+Date: Wed, 27 Apr 2022 18:06:46 -0700
+Subject: [PATCH 3/3] Silence some build errors
+
+---
+ cerbero/build/build.py | 4 ++--
+ config/ios.config      | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/cerbero/build/build.py b/cerbero/build/build.py
+index cddec6c0..58a40f60 100644
+--- a/cerbero/build/build.py
++++ b/cerbero/build/build.py
+@@ -648,8 +648,8 @@ class CMake (MakefilesBase):
+     async def configure(self):
+         cc = self.env.get('CC', 'gcc')
+         cxx = self.env.get('CXX', 'g++')
+-        cflags = self.env.get('CFLAGS', '')
+-        cxxflags = self.env.get('CXXFLAGS', '')
++        cflags = self.env.get('CFLAGS', '') + '-Wno-unused-but-set-variable'
++        cxxflags = self.env.get('CXXFLAGS', '') + '-Wno-unused-but-set-variable'
+         # FIXME: CMake doesn't support passing "ccache $CC"
+         if self.config.use_ccache:
+             cc = cc.replace('ccache', '').strip()
+diff --git a/config/ios.config b/config/ios.config
+index e1a3ce11..ad6406b6 100644
+--- a/config/ios.config
++++ b/config/ios.config
+@@ -69,7 +69,7 @@ else:
+ sysroot = version_array_to_sdk_location(best_version)
+ 
+ ccache = use_ccache and 'ccache ' or ''
+-extra_cflags = ''
++extra_cflags = '-Wno-unused-but-set-variable'
+ extra_ldflags = '-Wno-error=unused-command-line-argument'
+ if target_arch == Architecture.ARM64:
+     arch_cflags = ' -arch arm64 -pipe'
+-- 
+2.32.0 (Apple Git-132)
+

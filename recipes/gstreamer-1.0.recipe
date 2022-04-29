@@ -31,6 +31,9 @@ class Recipe(custom.GStreamer):
         Platform.DARWIN: ['libexec/gstreamer-1.0/gst-ptp-helper%(bext)s'],
     }
 
+
+    patches = ['gstreamer-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch', 'gstreamer-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch']
+
     files_devel = [
             'include/gstreamer-1.0/gst/*.h',
             'include/gstreamer-1.0/gst/base',

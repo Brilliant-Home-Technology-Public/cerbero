@@ -1,0 +1,213 @@
+From 051ff814c19dbb9804f4820a5ca0e0a7291ce821 Mon Sep 17 00:00:00 2001
+From: Kiyoshi Shikuma <kiyoshi@brilliant.tech>
+Date: Wed, 27 Apr 2022 18:05:56 -0700
+Subject: [PATCH 2/3] Add gst-plugins-good-1.0 patches to fix Content-Base
+ issue
+
+---
+ recipes/gst-plugins-good-1.0.recipe           |   2 +
+ ...mproved-handling-of-control-concaten.patch | 114 ++++++++++++++++++
+ ...ppend-aggregate-control-string-to-ba.patch |  57 +++++++++
+ 3 files changed, 173 insertions(+)
+ create mode 100644 recipes/gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch
+ create mode 100644 recipes/gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch
+
+diff --git a/recipes/gst-plugins-good-1.0.recipe b/recipes/gst-plugins-good-1.0.recipe
+index 6ce8da16..001051ab 100644
+--- a/recipes/gst-plugins-good-1.0.recipe
++++ b/recipes/gst-plugins-good-1.0.recipe
+@@ -36,6 +36,8 @@ class Recipe(custom.GStreamer):
+             'libvpx', 'libdv', 'cairo']
+     use_system_libs = True
+ 
++    patches = ['gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch', 'gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch']
++
+ 
+     files_lang = ['gst-plugins-good-1.0']
+ 
+diff --git a/recipes/gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch b/recipes/gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch
+new file mode 100644
+index 00000000..12c434a5
+--- /dev/null
++++ b/recipes/gst-plugins-good-1.0/0001-Revert-rtspsrc-improved-handling-of-control-concaten.patch
+@@ -0,0 +1,114 @@
++From c6cc5640e248bacd2207ca533fd1ec259f3b3d1d Mon Sep 17 00:00:00 2001
++From: Kiyoshi Shikuma <kiyoshi@brilliant.tech>
++Date: Wed, 27 Apr 2022 12:26:43 -0700
++Subject: [PATCH 1/2] Revert "rtspsrc: improved handling of control
++ concatenation with base"
++
++This reverts commit 09d4514814932373f5c993a2d7091afe2de352b0.
++---
++ .../gst-plugins-good/gst/rtsp/gstrtspsrc.c    | 59 ++++++++-----------
++ 1 file changed, 23 insertions(+), 36 deletions(-)
++
++diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
++index 0032ae5882..396d2b5174 100644
++--- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+++++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
++@@ -2299,7 +2299,7 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
++     gint n_streams)
++ {
++   GstRTSPStream *stream;
++-  const gchar *control_path;
+++  const gchar *control_url;
++   const GstSDPMedia *media;
++ 
++   /* get media, should not return NULL */
++@@ -2351,64 +2351,51 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
++   /* get control url to construct the setup url. The setup url is used to
++    * configure the transport of the stream and is used to identity the stream in
++    * the RTP-Info header field returned from PLAY. */
++-  control_path = gst_sdp_media_get_attribute_val (media, "control");
++-  if (control_path == NULL)
++-    control_path = gst_sdp_message_get_attribute_val_n (sdp, "control", 0);
+++  control_url = gst_sdp_media_get_attribute_val (media, "control");
+++  if (control_url == NULL)
+++    control_url = gst_sdp_message_get_attribute_val_n (sdp, "control", 0);
++ 
++   GST_DEBUG_OBJECT (src, "stream %d, (%p)", stream->id, stream);
++   GST_DEBUG_OBJECT (src, " port: %d", stream->port);
++   GST_DEBUG_OBJECT (src, " container: %d", stream->container);
++-  GST_DEBUG_OBJECT (src, " control: %s", GST_STR_NULL (control_path));
+++  GST_DEBUG_OBJECT (src, " control: %s", GST_STR_NULL (control_url));
++ 
++-  /* RFC 2326, C.3: missing control_path permitted in case of a single stream */
++-  if (control_path == NULL && n_streams == 1) {
++-    control_path = "";
+++  /* RFC 2326, C.3: missing control_url permitted in case of a single stream */
+++  if (control_url == NULL && n_streams == 1) {
+++    control_url = "";
++   }
++ 
++-  if (control_path != NULL) {
++-    stream->control_url = g_strdup (control_path);
+++  if (control_url != NULL) {
+++    stream->control_url = g_strdup (control_url);
++     /* Build a fully qualified url using the content_base if any or by prefixing
++      * the original request.
++-     * If the control_path starts with a non rtsp: protocol we will most
+++     * If the control_url starts with a '/' or a non rtsp: protocol we will most
++      * likely build a URL that the server will fail to understand, this is ok,
++      * we will fail then. */
++-    if (g_str_has_prefix (control_path, "rtsp://"))
++-      stream->conninfo.location = g_strdup (control_path);
+++    if (g_str_has_prefix (control_url, "rtsp://"))
+++      stream->conninfo.location = g_strdup (control_url);
++     else {
++-      if (g_strcmp0 (control_path, "*") == 0)
++-        control_path = "";
+++      if (g_strcmp0 (control_url, "*") == 0)
+++        control_url = "";
++       /* handle url with query */
++       if (src->conninfo.url && src->conninfo.url->query) {
++         stream->conninfo.location =
++             gst_rtsp_url_get_request_uri_with_control (src->conninfo.url,
++-            control_path);
+++            control_url);
++       } else {
++         const gchar *base;
++         gboolean has_slash;
++-        const gchar *slash;
++-        const gchar *actual_control_path = NULL;
++ 
++         base = get_aggregate_control (src);
++-        has_slash = g_str_has_suffix (base, "/");
++-        /* manage existence or non-existence of / in control path */
++-        if (control_path && strlen (control_path) > 0) {
++-          gboolean control_has_slash = g_str_has_prefix (control_path, "/");
++-
++-          actual_control_path = control_path;
++-          if (has_slash && control_has_slash) {
++-            if (strlen (control_path) == 1) {
++-              actual_control_path = NULL;
++-            } else {
++-              actual_control_path = control_path + 1;
++-            }
++-          } else {
++-            has_slash = has_slash || control_has_slash;
++-          }
++-        }
++-        slash = (!has_slash && (actual_control_path != NULL)) ? "/" : "";
+++
+++        /* check if the base ends or control starts with / */
+++        has_slash = g_str_has_prefix (control_url, "/");
+++        has_slash = has_slash || g_str_has_suffix (base, "/");
+++
++         /* concatenate the two strings, insert / when not present */
++         stream->conninfo.location =
++-            g_strdup_printf ("%s%s%s", base, slash, control_path);
+++            g_strdup_printf ("%s%s%s", base, has_slash ? "" : "/", control_url);
+++
++       }
++     }
++   }
++-- 
++2.32.0 (Apple Git-132)
++
+diff --git a/recipes/gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch b/recipes/gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch
+new file mode 100644
+index 00000000..86149c59
+--- /dev/null
++++ b/recipes/gst-plugins-good-1.0/0002-Revert-rtspsrc-append-aggregate-control-string-to-ba.patch
+@@ -0,0 +1,57 @@
++From 70939b6cf8820330d7969e1621d36e0527fea545 Mon Sep 17 00:00:00 2001
++From: Kiyoshi Shikuma <kiyoshi@brilliant.tech>
++Date: Wed, 27 Apr 2022 12:26:55 -0700
++Subject: [PATCH 2/2] Revert "rtspsrc: append aggregate control string to base
++ URL before query string"
++
++This reverts commit ed6b5a3a632807ea00ae7c609f0c0bed69a9078e.
++---
++ .../gst-plugins-good/gst/rtsp/gstrtspsrc.c    | 27 +++++++------------
++ 1 file changed, 10 insertions(+), 17 deletions(-)
++
++diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
++index 396d2b5174..48363f1e04 100644
++--- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+++++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
++@@ -2375,28 +2375,21 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
++     if (g_str_has_prefix (control_url, "rtsp://"))
++       stream->conninfo.location = g_strdup (control_url);
++     else {
+++      const gchar *base;
+++      gboolean has_slash;
+++
++       if (g_strcmp0 (control_url, "*") == 0)
++         control_url = "";
++-      /* handle url with query */
++-      if (src->conninfo.url && src->conninfo.url->query) {
++-        stream->conninfo.location =
++-            gst_rtsp_url_get_request_uri_with_control (src->conninfo.url,
++-            control_url);
++-      } else {
++-        const gchar *base;
++-        gboolean has_slash;
++ 
++-        base = get_aggregate_control (src);
+++      base = get_aggregate_control (src);
++ 
++-        /* check if the base ends or control starts with / */
++-        has_slash = g_str_has_prefix (control_url, "/");
++-        has_slash = has_slash || g_str_has_suffix (base, "/");
+++      /* check if the base ends or control starts with / */
+++      has_slash = g_str_has_prefix (control_url, "/");
+++      has_slash = has_slash || g_str_has_suffix (base, "/");
++ 
++-        /* concatenate the two strings, insert / when not present */
++-        stream->conninfo.location =
++-            g_strdup_printf ("%s%s%s", base, has_slash ? "" : "/", control_url);
++-
++-      }
+++      /* concatenate the two strings, insert / when not present */
+++      stream->conninfo.location =
+++          g_strdup_printf ("%s%s%s", base, has_slash ? "" : "/", control_url);
++     }
++   }
++   GST_DEBUG_OBJECT (src, " setup: %s",
++-- 
++2.32.0 (Apple Git-132)
++
+-- 
+2.32.0 (Apple Git-132)
+
