@@ -6,13 +6,13 @@ Subject: [PATCH 2/2] Revert "rtspsrc: append aggregate control string to base
 
 This reverts commit ed6b5a3a632807ea00ae7c609f0c0bed69a9078e.
 ---
- .../gst-plugins-good/gst/rtsp/gstrtspsrc.c    | 27 +++++++------------
+ ../gst/rtsp/gstrtspsrc.c    | 27 +++++++------------
  1 file changed, 10 insertions(+), 17 deletions(-)
 
-diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+diff --git a/gst/rtsp/gstrtspsrc.c b/gst/rtsp/gstrtspsrc.c
 index 396d2b5174..48363f1e04 100644
---- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
-+++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+--- a/gst/rtsp/gstrtspsrc.c
++++ b/gst/rtsp/gstrtspsrc.c
 @@ -2375,28 +2375,21 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
      if (g_str_has_prefix (control_url, "rtsp://"))
        stream->conninfo.location = g_strdup (control_url);

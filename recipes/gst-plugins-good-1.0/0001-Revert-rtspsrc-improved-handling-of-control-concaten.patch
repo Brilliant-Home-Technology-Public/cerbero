@@ -9,10 +9,10 @@ This reverts commit 09d4514814932373f5c993a2d7091afe2de352b0.
  .../gst-plugins-good/gst/rtsp/gstrtspsrc.c    | 59 ++++++++-----------
  1 file changed, 23 insertions(+), 36 deletions(-)
 
-diff --git a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+diff --git a/gst/rtsp/gstrtspsrc.c b/gst/rtsp/gstrtspsrc.c
 index 0032ae5882..396d2b5174 100644
---- a/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
-+++ b/subprojects/gst-plugins-good/gst/rtsp/gstrtspsrc.c
+--- a/gst/rtsp/gstrtspsrc.c
++++ b/gst/rtsp/gstrtspsrc.c
 @@ -2299,7 +2299,7 @@ gst_rtspsrc_create_stream (GstRTSPSrc * src, GstSDPMessage * sdp, gint idx,
      gint n_streams)
  {
