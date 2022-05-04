@@ -85,16 +85,53 @@ class FrameworkLibrary(object):
 
 class DynamicFrameworkLibrary(FrameworkLibrary):
     def _create_framework_library(self, libraries):
-        cmdline  = ['clang', '-headerpad_max_install_names', '-dynamiclib',
-                    '-o', self.libname, '-arch', self.arch]
-        if self.target == Distro.OS_X:
-            cmdline += ['-mmacosx-version-min=%s' % self.min_version]
+        if self.target == Distro.IOS:
+            self._create_ios_dynamic_lib(libraries)
+        else:
+            cmdline  = ['clang', '-headerpad_max_install_names', '-dynamiclib',
+                        '-o', self.libname]
+            archs = []
+            if self.arch == Architecture.UNIVERSAL:
+                archs = self.universal_archs
+            else:
+                archs = [self.arch]
+            for arch in archs:
+                cmdline += ['-arch', arch]
+            if self.target == Distro.OS_X:
+                cmdline += ['-mmacosx-version-min=%s' % self.min_version]
 
-        cmdline += ['-install_name', self.install_name]
-        for lib in libraries:
-            cmdline += ['-Wl,-reexport_library', lib]
+            cmdline += ['-install_name', self.install_name]
+            for lib in libraries:
+                cmdline += ['-Wl,-reexport_library', lib]
 
-        shell.new_call(cmdline, env=self.env)
+            shell.new_call(cmdline, env=self.env)
+
+    def _create_ios_dynamic_lib(self, libraries):
+        basecmdline  = ['clang', '-headerpad_max_install_names', '-dynamiclib']
+        compiledlibs = []
+        if self.arch == Architecture.UNIVERSAL:
+            archs = self.universal_archs
+
+        else:
+            archs = [self.arch]
+
+        for arch in archs:
+            libname = self.libname + '-' + arch
+            archcmdline = basecmdline + ['-o', libname, '-arch', arch]
+            if arch == Architecture.ARM64:
+                archcmdline += ['-mios-version-min=%s' % self.min_version]
+                archcmdline += ['-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
+            compiledlibs += [libname]
+            archcmdline += ['-install_name', self.install_name]
+            for lib in libraries:
+                archcmdline += ['-Wl,-reexport_library', lib]
+            shell.new_call(archcmdline, env=self.env)
+        # Link back together
+        lipocmdline = ['lipo']
+        for compiledlib in compiledlibs:
+            lipocmdline += [compiledlib]
+        lipocmdline += ['-create', '-output', self.libname]
+        shell.new_call(lipocmdline, env=self.env)
 
     def _get_lib_file_name(self, lib):
         return 'lib%s.dylib' % lib

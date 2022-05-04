@@ -22,7 +22,7 @@ import shutil
 
 from cerbero.config import Architecture, Platform
 from cerbero.ide.pkgconfig import PkgConfig
-from cerbero.ide.xcode.fwlib import StaticFrameworkLibrary
+from cerbero.ide.xcode.fwlib import DynamicFrameworkLibrary
 from cerbero.errors import EmptyPackageError, FatalError
 from cerbero.packages import PackagerBase, PackageType
 from cerbero.packages.package import Package, MetaPackage, App,\
@@ -573,7 +573,7 @@ class IOSPackage(ProductPackage, FrameworkHeadersMixin):
         # Get the list of static libraries
         static_files = [x for x in files if x.endswith('.a')]
 
-        fwlib = StaticFrameworkLibrary(self.config.ios_min_version, self.config.target_distro,
+        fwlib = DynamicFrameworkLibrary(self.config.ios_min_version, self.config.target_distro,
             libname, libname, static_files, self.config.target_arch, env=self.config.env)
         fwlib.use_pkgconfig = False
         if self.config.target_arch == Architecture.UNIVERSAL:
