@@ -111,21 +111,24 @@ class DynamicFrameworkLibrary(FrameworkLibrary):
         compiledlibs = []
         if self.arch == Architecture.UNIVERSAL:
             archs = self.universal_archs
-
         else:
             archs = [self.arch]
 
         for arch in archs:
             libname = self.libname + '-' + arch
-            archcmdline = basecmdline + ['-o', libname, '-arch', arch]
+            archcmdline = basecmdline + ['-o', self.libname, '-arch', arch]
             if arch == Architecture.ARM64:
                 archcmdline += ['-mios-version-min=%s' % self.min_version]
                 archcmdline += ['-isysroot', '/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk']
+            else:
+                continue
             compiledlibs += [libname]
             archcmdline += ['-install_name', self.install_name]
             for lib in libraries:
-                archcmdline += ['-Wl,-reexport_library', lib]
+                archcmdline += ['-Wl,-reexport_library,%s' % lib]
             shell.new_call(archcmdline, env=self.env)
+            break
+        return
         # Link back together
         lipocmdline = ['lipo']
         for compiledlib in compiledlibs:
