@@ -7,7 +7,7 @@ class SDKPackage(custom.GStreamer, package.SDKPackage):
     shortdesc = "GStreamer 1.0 Brilliant"
     longdesc = "GStreamer 1.0 Brilliant"
     title = "GStreamer 1.0 Brilliant"
-    sdk_version = 'BRL1' # Brilliant Version, increment integer on every release
+    sdk_version = 'BRL3' # Brilliant Version, increment integer on every release
     uuid = '67655c4f-8ce0-4bd5-a00e-3535518944b5' # Brilliant uuid for GStreamer
     ignore_package_prefix = True
     packages =[
