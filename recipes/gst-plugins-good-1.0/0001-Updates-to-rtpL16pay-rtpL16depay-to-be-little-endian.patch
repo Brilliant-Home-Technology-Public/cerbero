@@ -1,0 +1,49 @@
+From 06696fdaa4e5ace9a3f9a95d2478f96c334135f4 Mon Sep 17 00:00:00 2001
+From: deploy <deploy@brilliant.tech>
+Date: Fri, 22 Apr 2022 09:56:38 -0700
+Subject: [PATCH] Updates to rtpL16pay/rtpL16depay to support some
+devices that use little endian instead of big endian.
+
+---
+ .../gst-plugins-good/gst/rtp/gstrtpL16depay.c | 4 ++--
+ .../gst-plugins-good/gst/rtp/gstrtpL16pay.c   | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/subprojects/gst-plugins-good/gst/rtp/gstrtpL16depay.c b/subprojects/gst-plugins-good/gst/rtp/gstrtpL16depay.c
+index 3695da9..70728cd 100644
+--- a/subprojects/gst-plugins-good/gst/rtp/gstrtpL16depay.c
++++ b/subprojects/gst-plugins-good/gst/rtp/gstrtpL16depay.c
+@@ -54,7 +54,7 @@ GST_STATIC_PAD_TEMPLATE ("src",
+     GST_PAD_SRC,
+     GST_PAD_ALWAYS,
+     GST_STATIC_CAPS ("audio/x-raw, "
+-        "format = (string) S16BE, "
++        "format = (string) S16LE, "
+         "layout = (string) interleaved, "
+         "rate = (int) [ 1, MAX ], " "channels = (int) [ 1, MAX ]")
+     );
+@@ -189,7 +189,7 @@ gst_rtp_L16_depay_setcaps (GstRTPBaseDepayload * depayload, GstCaps * caps)
+ 
+   info = &rtpL16depay->info;
+   gst_audio_info_init (info);
+-  info->finfo = gst_audio_format_get_info (GST_AUDIO_FORMAT_S16BE);
++  info->finfo = gst_audio_format_get_info (GST_AUDIO_FORMAT_S16LE);
+   info->rate = clock_rate;
+   info->channels = channels;
+   info->bpf = (info->finfo->width / 8) * channels;
+diff --git a/subprojects/gst-plugins-good/gst/rtp/gstrtpL16pay.c b/subprojects/gst-plugins-good/gst/rtp/gstrtpL16pay.c
+index 4783a65..a7d947c 100644
+--- a/subprojects/gst-plugins-good/gst/rtp/gstrtpL16pay.c
++++ b/subprojects/gst-plugins-good/gst/rtp/gstrtpL16pay.c
+@@ -53,7 +53,7 @@ GST_STATIC_PAD_TEMPLATE ("sink",
+     GST_PAD_SINK,
+     GST_PAD_ALWAYS,
+     GST_STATIC_CAPS ("audio/x-raw, "
+-        "format = (string) S16BE, "
++        "format = (string) S16LE, "
+         "layout = (string) interleaved, "
+         "rate = (int) [ 1, MAX ], " "channels = (int) [ 1, MAX ]")
+     );
+-- 
+2.17.1
+
