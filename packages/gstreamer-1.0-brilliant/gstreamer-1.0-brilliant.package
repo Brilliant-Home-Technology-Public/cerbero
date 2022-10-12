@@ -7,7 +7,7 @@ class SDKPackage(custom.GStreamer, package.SDKPackage):
     shortdesc = "GStreamer 1.0 Brilliant"
     longdesc = "GStreamer 1.0 Brilliant"
     title = "GStreamer 1.0 Brilliant"
-    sdk_version = 'BRL3' # Brilliant Version, increment integer on every release
+    sdk_version = 'BRL4' # Brilliant Version, increment integer on every release
     uuid = '67655c4f-8ce0-4bd5-a00e-3535518944b5' # Brilliant uuid for GStreamer
     ignore_package_prefix = True
     packages =[
@@ -20,11 +20,11 @@ class SDKPackage(custom.GStreamer, package.SDKPackage):
                ('gstreamer-1.0-effects', False, True),
                ('gstreamer-1.0-net', False, True),
                #('gstreamer-1.0-visualizers', False, True),
-               #('gstreamer-1.0-codecs-gpl', False, False),
-               #('gstreamer-1.0-codecs-restricted', False, False),
+               ('gstreamer-1.0-codecs-gpl', False, False),
+               ('gstreamer-1.0-codecs-restricted', False, False),
                #('gstreamer-1.0-net-restricted', False, False),
                #('gstreamer-1.0-dvd', False, False),
-               #('gstreamer-1.0-libav', False, False),
+               ('gstreamer-1.0-libav', False, False),
                #('gstreamer-1.0-encoding', False, False),
                #('gstreamer-1.0-capture', False, False),
                #('gstreamer-1.0-editing', False, False),
